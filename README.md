@@ -9,9 +9,9 @@ Features:
 
 I might update this extension with new features in the future.
 
-# Example
+# Examples
 
-![Example #1](https)
+![Example #1](https://raw.githubusercontent.com/Calebh101/dexcom-monitor-vscode/refs/heads/master/icons/example1.png)
 
 # Changelog
 
