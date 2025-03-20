@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as Path from 'path';
 
-var debug: boolean = true;
+var debug: boolean = false;
 var globalContext: vscode.ExtensionContext;
 
 function print(input: any) {

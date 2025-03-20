@@ -39,7 +39,7 @@
                     if (dexcomTime < 300 || dexcomTime % 300 > 30) updateRefresh(false);
 
                     if (data.length >= 2) {
-                        document.getElementById("reading1").innerHTML = "Previous: " + data[1]["Value"] + "<br>" + getStringFromTrend(data[1]["Trend"]);
+                        document.getElementById("reading1").innerHTML = "Previous: " + data[1]["Value"] + " - " + getStringFromTrend(data[1]["Trend"]);
                     } else {
                         document.getElementById("reading1").innerHTML = "No Data";
                     }
@@ -189,15 +189,12 @@
         </script>
 
         <p style="font-size: medium; text-align: center;" id="reading0">Loading...</p>
-        <p style="font-size: small; text-align: center;" id="time0">Loading...</p>
+
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0 auto;">
+        <p style="font-size: small; margin: 0;" id="time0">Loading...</p>
+        <button id="refreshbutton" onclick="update()">Loading...</button>
+        </div>
+
         <p style="font-size: small; text-align: center;" id="reading1">Loading...</p>
-        <button id="refreshbutton" onclick="update()">Refresh</button>
-        
-        <style>
-            #refreshbutton {
-                display: block;
-                margin: 20px auto;
-            }
-        </style>
     </body>
 </html>

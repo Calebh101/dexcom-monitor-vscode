@@ -1,8 +1,10 @@
 {
   "name": "dexcom-monitor",
   "displayName": "Dexcom Monitor",
-  "description": "Monitor your Dexcom CGM levels while coding.",
+  "description": "Very simple extension to let you see your current glucose.",
   "version": "0.0.0",
+  "publisher": "Calebh101",
+  "icon": "icons/icon.png",
   "engines": {
     "vscode": "^1.98.0"
   },
@@ -20,7 +22,7 @@
           "id": "dexcom-monitor.sidebar",
           "name": "Dexcom Monitor",
           "type": "webview",
-          "icon": "icons/sidebar/monitor.png"
+          "icon": "icons/sidebar.png"
         }
       ]
     },
