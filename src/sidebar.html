@@ -1,0 +1,203 @@
+<html>
+    <body>
+        <script>
+            let dexcomSessionToken;
+            const vscode = acquireVsCodeApi();
+
+            const username = "{{username}}";
+            const password = "{{password}}";
+            const debug = "{{debug}}" == "true";
+
+            dexcomSetup();
+            update();
+
+            function print(input) {
+                if (debug) {
+                    console.log("dexcom-monitor.sidebar: LOG: " + input);
+                }
+            }
+
+            function updateRefresh(value) {
+                refreshing = value;
+                document.getElementById("refreshbutton").innerHTML = refreshing ? "Refreshing..." : "Refresh";
+            }
+
+            async function update() {
+                try {
+                    updateRefresh(true);
+                    const data = await dexcom();
+                    dexcomTime = getDexcomTime(data[0]);
+
+                    if (data.length == 0) {
+                        document.getElementById("reading0").innerHTML = "No Data";
+                        document.getElementById("reading1").innerHTML = "No Data";
+                        updateRefresh(false);
+                        return;
+                    }
+
+                    document.getElementById("reading0").innerHTML = data[0]["Value"] + " - " + getStringFromTrend(data[0]["Trend"]);
+                    if (dexcomTime < 300 || dexcomTime % 300 > 30) updateRefresh(false);
+
+                    if (data.length >= 2) {
+                        document.getElementById("reading1").innerHTML = "Previous: " + data[1]["Value"] + "<br>" + getStringFromTrend(data[1]["Trend"]);
+                    } else {
+                        document.getElementById("reading1").innerHTML = "No Data";
+                    }
+                } catch (e) {
+                    document.getElementById("reading0").innerHTML = "Error: " + e;
+                    document.getElementById("reading1").innerHTML = "No Data";
+                }
+            };
+
+            function getStringFromTrend(trend) {
+                switch (trend) {
+                    case 'Flat': return 'Steady';
+                    case 'FortyFiveDown': return "Slowly falling";
+                    case 'FortyFiveUp': return "Slowly rising";
+                    case 'SingleDown': return "Falling";
+                    case 'SingleUp': return "Rising";
+                    case 'DoubleDown': return "Quickly falling";
+                    case 'DoubleUp': return "Quickly rising";
+                    case 'None': return "No trend";
+                    case 'NonComputable': return "No trend";
+                    case 'RateOutOfRange': return "No trend";
+                    default: return "No trend";
+                }
+            }
+
+            async function dexcom(minutes = 10) {
+                if (!username || !password) {
+                    return { "error": "invalid credentials", "message": "credentials are null", status: 400 };
+                }
+
+                const response = await fetch(
+                    'https://share2.dexcom.com/ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues',
+                    {
+                        method: 'POST',
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            "sessionId": dexcomSessionToken ?? "null",
+                            "minutes": minutes + 5,
+                            "maxCount": minutes / 5,
+                        }),
+                    },
+                );
+
+                if (response.status !== 200) {
+                    print("refreshing session token... (code: " + response.status + ") (response: " + (await response.text()) + ")");
+                    const isInJapan = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tokyo' }).resolvedOptions().timeZone === 'Asia/Tokyo';
+                    const applicationId = isInJapan ? "d8665ade-9673-4e27-9ff6-92db4ce13d13" : "d89443d2-327c-4a6f-89e5-496bbb0317db";
+
+                    const userId = await loginShare(username, password, applicationId);
+                    const accountId = (await userId.text()).replaceAll("\"", "");
+
+                    if (userId.status !== 200) {
+                        print("error: " + userId.status);
+                        return { "error": "unauthorized", "message": "user credentials are incorrect", "status": 403 };
+                    }
+
+                    const refresh = await fetch(
+                        "https://share2.dexcom.com/ShareWebServices/Services/General/LoginPublisherAccountById",
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                "accountId": accountId,
+                                "password": password,
+                                "applicationId": applicationId,
+                            }),
+                        },
+                    );
+
+                    const body = { "token": (await refresh.text()).replaceAll("\"", "") };
+                    print("refresh.token response: " + JSON.stringify(body));
+
+                    if (refresh.status == 200) {
+                        dexcomSessionToken = body.token;
+                        print("retrying...");
+                        return await dexcom();
+                    } else {
+                        return { "error": "unauthorized", "message": "user has revoked permissions", code: 403 };
+                    }
+                }
+
+                const data = await response.json();
+                print("found data: " + typeof response + ":" + typeof data);
+                return data;
+            }
+
+            async function loginShare(username, password, application) {
+                return await fetch(
+                    "https://share2.dexcom.com/ShareWebServices/Services/General/AuthenticatePublisherAccount",
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            "accountName": username,
+                            "password": password,
+                            "applicationId": application,
+                        }),
+                    },
+                );
+            }
+
+            let isProcessing = false;
+            let dexcomTime = null;
+            let refreshing = false;
+
+            function dexcomSetup() {
+                const dexcomTimer = setInterval(async () => {
+                    if (!isProcessing) {
+                        if (dexcomTime === null || ((dexcomTime % 300 >= 10) && (dexcomTime % 300 < 30) && (dexcomTime >= 300))) {
+                            isProcessing = true;
+                            dexcomTime = dexcomTime || 0;
+
+                            try {
+                                update();
+                            } catch (e) {
+                                throw e;
+                            } finally {
+                                isProcessing = false;
+                            }
+                        }
+                    }
+
+                    dexcomTime = (dexcomTime === null ? 0 : dexcomTime + 1);
+                    document.getElementById("time0").innerHTML = "-" + formatSeconds(dexcomTime);
+                    print(dexcomTime);
+                }, 1000);
+            };
+
+            function getDexcomTime(data) {
+                const dtString = data["DT"];
+                const timestamp = parseInt(dtString.match(/\d+/)[0]);
+                const date = new Date(timestamp);
+                return Math.floor((Date.now() - date.getTime()) / 1000);
+            };
+
+            function formatSeconds(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${minutes}:${secs.toString().padStart(2, '0')}`;
+            }
+        </script>
+
+        <p style="font-size: medium; text-align: center;" id="reading0">Loading...</p>
+        <p style="font-size: small; text-align: center;" id="time0">Loading...</p>
+        <p style="font-size: small; text-align: center;" id="reading1">Loading...</p>
+        <button id="refreshbutton" onclick="update()">Refresh</button>
+        
+        <style>
+            #refreshbutton {
+                display: block;
+                margin: 20px auto;
+            }
+        </style>
+    </body>
+</html>
