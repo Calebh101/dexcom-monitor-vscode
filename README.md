@@ -9,6 +9,10 @@ Features:
 
 I might update this extension with new features in the future.
 
+# What is this using?
+
+This extension is using JavaScript implementations ofmy Dart package [dexcom for Dart](https://pub.dev/packages/dexcom) and documentation from my repository [dexcom](https://github.com/Calebh101/dexcom). These inherintly use documentation and application IDs from [pydexcom](https://github.com/gagebenne/pydexcom).
+
 # Examples
 
 ![Example #1](https://raw.githubusercontent.com/Calebh101/dexcom-monitor-vscode/refs/heads/master/icons/example1.png)
