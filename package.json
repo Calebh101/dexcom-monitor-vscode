@@ -12,6 +12,11 @@
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "dexcom",
+    "bloodsugar",
+    "glucose"
+  ],
   "main": "./dist/extension.js",
   "activationEvents": [
     "onStartupFinished"
