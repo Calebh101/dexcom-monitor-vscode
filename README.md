@@ -19,6 +19,10 @@ This extension is using JavaScript implementations ofmy Dart package [dexcom for
 
 # Changelog
 
-## 0.0.0 - 3/19/25
+## 0.0.0 - 3/20/25
 
 - Initial release
+
+## 0.0.1 - 3/20/25
+
+- Fixed asset bug

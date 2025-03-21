@@ -2,7 +2,7 @@
   "name": "dexcom-monitor",
   "displayName": "Dexcom Monitor",
   "description": "Very simple extension to let you see your current glucose.",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "publisher": "Calebh101",
   "icon": "icons/icon.png",
   "repository": "https://github.com/Calebh101/dexcom-monitor-vscode",
